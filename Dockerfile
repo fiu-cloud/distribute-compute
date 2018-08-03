@@ -24,13 +24,15 @@ WORKDIR python-paillier
 RUN git fetch --all --tags --prune
 RUN git checkout tags/1.4.0
 RUN cp -r phe /usr/local/lib/python3.6/site-packages
+COPY gpdb-entrypoint.sh /usr/local/bin/gpdb-entrypoint.sh
+RUN chmod 755 /usr/local/bin/gpdb-entrypoint.sh
 
 USER gpadmin
 ENV LOGNAME gpadmin
 WORKDIR /home/gpadmin
 ENV MASTER_DATA_DIRECTORY=/gpdata/master/gpseg-1
-
-
+COPY s3.conf /home/gpadmin/s3.conf
+#copy new gpdb entrypoint
 
 #docker build . -t fiucloud/compute
 #docker stop compute
