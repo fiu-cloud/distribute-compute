@@ -17,7 +17,8 @@ RUN python3.6 -m pip install \
     click==6.7 \
     pycrypto==2.6.1 \
     numpy==1.14.5 \
-    nose==1.3.7
+    nose==1.3.7 \
+    psycopg2-binary
 
 #Install phe
 RUN git clone https://github.com/n1analytics/python-paillier.git
@@ -33,6 +34,10 @@ RUN chmod 755 /home/gpadmin/s3.conf
 RUN echo "" >> /home/gpadmin/s3.conf
 RUN echo "secret = \""$S3_SECRET"\"" >> /home/gpadmin/s3.conf
 RUN echo "accessid = \""$S3_ACCESSID"\"" >> /home/gpadmin/s3.conf
+
+COPY s3_test.py /home/gpadmin/s3_test.py
+RUN chmod 755 /home/gpadmin/s3_test.py
+
 
 USER gpadmin
 ENV LOGNAME gpadmin

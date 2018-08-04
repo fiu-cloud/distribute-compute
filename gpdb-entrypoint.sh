@@ -1,5 +1,5 @@
 #!/bin/bash 
-exec &>> gpdb-entrypoint.txt
+exec &>> gpdb-entrypoint.log
 source /usr/local/gpdb/greenplum_path.sh
 
 #
