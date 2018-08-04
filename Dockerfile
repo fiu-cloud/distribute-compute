@@ -1,5 +1,6 @@
 FROM fiucloud/gpdb:latest
-
+ARG S3_SECRET
+ARG S3_ACCESSID
 USER root
 RUN yum install -y \
     https://centos7.iuscommunity.org/ius-release.rpm \
@@ -27,11 +28,19 @@ RUN cp -r phe /usr/local/lib/python3.6/site-packages
 COPY gpdb-entrypoint.sh /usr/local/bin/gpdb-entrypoint.sh
 RUN chmod 755 /usr/local/bin/gpdb-entrypoint.sh
 
+COPY s3.conf /home/gpadmin/s3.conf
+RUN chmod 755 /home/gpadmin/s3.conf
+RUN echo "" >> /home/gpadmin/s3.conf
+RUN echo "secret = \""$S3_SECRET"\"" >> /home/gpadmin/s3.conf
+RUN echo "accessid = \""$S3_ACCESSID"\"" >> /home/gpadmin/s3.conf
+
 USER gpadmin
 ENV LOGNAME gpadmin
 WORKDIR /home/gpadmin
 ENV MASTER_DATA_DIRECTORY=/gpdata/master/gpseg-1
-COPY s3.conf /home/gpadmin/s3.conf
+
+
+
 #copy new gpdb entrypoint
 
 #docker build . -t fiucloud/compute
