@@ -25,7 +25,8 @@ sudo /usr/sbin/sshd &
 # Initialize instance the first time we start
 #
 if [ ! -s "$MASTER_DATA_DIRECTORY" ]; then
-
+echo "secret = \""$S3_SECRET"\"" >> /home/gpadmin/s3.conf
+echo "accessid = \""$S3_ACCESSID"\"" >> /home/gpadmin/s3.conf
 export MASTER_HOSTNAME=$(hostname)
 
 /usr/local/bin/discover_segments.sh
