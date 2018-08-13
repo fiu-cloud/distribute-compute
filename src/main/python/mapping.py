@@ -1,4 +1,4 @@
-import phe.paillier as paillier, psycopg2,uuid,time
+import phe.paillier as paillier, psycopg2,uuid,time,numpy as np
 
 _host="localhost"
 _database="gpadmin"
@@ -9,7 +9,10 @@ _s3_bucket="ifs-cloud"
 _s3_finished="_finished_"
 pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
 
-def read_table(file, schema):
+#read
+#schema is numphy schema
+#returns numphy table
+def read(file, schema1, schema2):
     conn = psycopg2.connect(host=_host,database=_database, user=_user, password=_password)
     # poll status table
     table = "tbl"+str(uuid.uuid1()).replace("-","_")
@@ -28,17 +31,20 @@ def read_table(file, schema):
     #get table
     table = "tbl"+str(uuid.uuid1()).replace("-","_")
     cur = conn.cursor()
-    cur.execute("CREATE READABLE EXTERNAL TABLE "+table+" "+schema+" LOCATION ('s3://"+_s3_endpoint+"/"+_s3_bucket+"/"+file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
+    cur.execute("CREATE READABLE EXTERNAL TABLE "+table+" "+schema1+" LOCATION ('s3://"+_s3_endpoint+"/"+_s3_bucket+"/"+file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
     cur.execute("SELECT * FROM "+table)
-    row = cur.fetchone()
-    while row is not None:
-        print(row)
-        row = cur.fetchone()
+    table = cur.fetchall()
+    table = table[1:]
+    out = np.array(table,dtype=schema2)
     cur.close()
     conn.close()
+    return out
 
-read_table("mock4.csv","(key text, value text)")
+# write by
+#def read(file, schema, data)
 
+input = read("mock4.csv","(key text, value text)",[('key', 'U10'), ('value', 'U10')])
+print(input['value'])
 
 
 
