@@ -56,20 +56,11 @@ def write(upload, file, schema1, schema2):
     #upload data
     for row in upload:
         cur.execute("INSERT INTO "+table+" "+schema2,row)
+    cur.execute("INSERT INTO "+pollTable+" (value) VALUES (%s)","1")
     cur.close()
 
 
 
+table = read("mock2.csv","(key text, value text)",[('key', 'U10'), ('value', 'U10')])
+write(table,"mock3.csv","(key text, value text)","(key, value) VALUES (%s, %s)")
 
-
-
-table = read("mock6.csv","(key text, value text)",[('key', 'U10'), ('value', 'U10')])
-write(table,"mock7.csv","(key text, value text)","(key, value) VALUES (%s, %s)")
-
-
-
-
-#row = cur.fetchone()
-#while row is not None:
-#    print(row)
-#    row = cur.fetchone()
