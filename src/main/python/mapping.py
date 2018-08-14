@@ -40,11 +40,32 @@ def read(file, schema1, schema2):
     conn.close()
     return out
 
-# write by
-#def read(file, schema, data)
 
-input = read("mock4.csv","(key text, value text)",[('key', 'U10'), ('value', 'U10')])
-print(input['value'])
+def write(upload, file, schema1, schema2):
+    conn = psycopg2.connect(host=_host,database=_database, user=_user, password=_password)
+    # poll status table
+    poll_file = "_finished_"+file
+    cur = conn.cursor()
+
+    #Create tables
+    pollTable = "tbl"+str(uuid.uuid1()).replace("-","_")
+    cur.execute("CREATE WRITABLE EXTERNAL TABLE "+pollTable+" (value text) LOCATION ('s3://"+_s3_endpoint+"/"+_s3_bucket+"/"+poll_file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
+    table = "tbl"+str(uuid.uuid1()).replace("-","_")
+    cur.execute("CREATE WRITABLE EXTERNAL TABLE "+table+" "+schema1+" LOCATION ('s3://"+_s3_endpoint+"/"+_s3_bucket+"/"+file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
+
+    #upload data
+    for row in upload:
+        cur.execute("INSERT INTO "+table+" "+schema2,row)
+    cur.close()
+
+
+
+
+
+
+table = read("mock6.csv","(key text, value text)",[('key', 'U10'), ('value', 'U10')])
+write(table,"mock7.csv","(key text, value text)","(key, value) VALUES (%s, %s)")
+
 
 
 
