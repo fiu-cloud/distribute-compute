@@ -71,31 +71,28 @@ def write(upload, file, schema,i):
     conn.commit()
     cur.close()
 
-#TODO: Have function that takes, schema, iteration, and mapping.
-#TODO: Eg. if odd than do this function, if even than do something else
-
 def additionScenario():
     iterations = 10
-    schema = "(a text, b integer, c float8)" #TODO: pull this into function
+    schema = "(a text, b integer, c float8)"
     rowCount = 1000000
     party = sys.argv[1]
 
     if party == "a":
         in_tbl = []
         for i in range(0, rowCount, 1):
-            in_tbl.append([str(i),i,i+0.5]) #TODO: pull this into function
+            in_tbl.append([str(i),i,i+0.5])
         write(in_tbl,"a/0/",schema,-1)
 
     for i in range(0, iterations):
         if party == "a":
             temp = read("b/"+str(i)+"/",schema,i)
-            out = list(map(lambda x: [x[0], x[1]+1, x[2]+1], temp)) #TODO: pull this into function
+            out = list(map(lambda x: [x[0], x[1]+1, x[2]+1], temp))
             # print(str(i) + " : " + str(temp) + " -> " + str(out))
 
             write(out,"a/"+str(i+1)+"/",schema,i)
         elif party == "b":
             temp = read("a/"+str(i)+"/",schema,i)
-            out = list(map(lambda x: [x[0], x[1]+1, x[2]+1], temp)) #TODO: pull this into function
+            out = list(map(lambda x: [x[0], x[1]+1, x[2]+1], temp))
             # print(str(i) + " : " + str(temp) + " -> " + str(out))
             write(out,"b/"+str(i)+"/",schema,i)
 
