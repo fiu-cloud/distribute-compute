@@ -43,9 +43,8 @@ ENV MASTER_DATA_DIRECTORY=/gpdata/master/gpseg-1
 
 
 #copy new gpdb entrypoint
-
 #docker build . -t fiucloud/compute
 #docker stop compute
 #docker rm compute
-#docker run --name compute -i -t -p 5432:5432 -d fiucloud/compute
+#docker run --name compute -e S3_SECRET='***ADD ME***' -e S3_ACCESSID='***ADD ME***' -i -t -p 5432:5432 -d fiucloud/compute
 #docker exec -i -t compute /bin/bash

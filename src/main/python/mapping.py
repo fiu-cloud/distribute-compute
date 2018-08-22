@@ -29,7 +29,7 @@ def read(file, schema1,i):
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(1)
+        time.sleep(10)
 
     #get table
     time.sleep(1)
