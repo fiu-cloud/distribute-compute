@@ -1,0 +1,5 @@
+0. Experiment folder in S3
+1. Remove pickle for serialising encrypted  (Security flaw)
+2. Linear
+3. RoundHack
+4. Logistic
