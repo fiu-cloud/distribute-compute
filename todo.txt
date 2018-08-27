@@ -1,5 +1,14 @@
-0. Experiment folder in S3
-1. Remove pickle for serialising encrypted  (Security flaw)
-2. Linear
-3. RoundHack
-4. Logistic
+1. Retry on timeout
+    Traceback (most recent call last):
+      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 135, in <module>
+        additionScenario()
+      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 109, in additionScenario
+        temp = read("a/"+str(i)+"/",schema,i)
+      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 38, in read
+        cur.execute("SELECT * FROM "+table)
+    psycopg2.InternalError: s3_import: could not read data: reader_transfer_data caught a S3LogicError exception: AWS returns error RequestTimeTooSkewed : The difference between the request time and the current time is too large., Function: fetchData, File: src/s3interface.cpp(340). (gpcloud.cpp:304)  (seg0 slice1 172.17.0.2:40000 pid=10377) (cdbdisp.c:254)
+    DETAIL:  External table s3_ba77a334_a6a1_11e8_b16e_acde48001122, line 483212 of file s3://s3-ap-southeast-2.amazonaws.com/alerting-project/data_a/7/ config=/home/gpadmin/s3.conf
+2. Experiment folder in S3
+3. Linear
+4. RoundHack
+5. Logistic
