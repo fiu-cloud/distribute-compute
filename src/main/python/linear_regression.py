@@ -32,9 +32,8 @@ x1_theta = 0
 x2_theta = 0
 gradients = [0] * len(x1)
 
+for i in range(0, 100):
 
-for i in range(0, 1000):
-    print("iteration: "+str(i))
     #predict x1
     x1_prediction = x1 * x1_theta
 
@@ -45,9 +44,13 @@ for i in range(0, 1000):
     gradient = x2_prediction - y
 
     #update x1
-    x1_theta = x1_theta - (alpha / n) * sum(gradient * x1)
+    x1_diff = sum(gradient * x1)
+    x1_theta = x1_theta - (alpha / n) * x1_diff
 
     #update x2
-    x2_theta = x2_theta - (alpha / n) * sum(gradient * x2)
+    #x2_diff = sum(gradient * x2)
+    x2_diff = sum([a*b for a,b in zip(gradient,x2)])
+    x2_theta = x2_theta - (alpha / n) * x2_diff
+    print(str(i) +" : " + str(x1_theta) + "["+str(x1_diff)+"], "+ str(x2_theta) + "["+str(x2_diff)+"]")
 
 print("x1="+ str(x1_theta) + " x2="+str(x2_theta))

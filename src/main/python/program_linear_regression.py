@@ -1,13 +1,35 @@
 import phe.paillier as paillier, psycopg2,uuid,time,psycopg2.extras,sys,pickle,binascii,datetime, numpy as np
-
+id = sys.argv[1]
+print("WORKSDPACE "+ id)
 _host="localhost"
 _database="gpadmin"
 _user="gpadmin"
 _password="greenplum"
 _s3_endpoint="s3-ap-southeast-2.amazonaws.com"
-_s3_bucket="alerting-project"
+_s3_bucket="alerting-project/"+id
 _s3_finished="_finished_"
 
+
+def serialisePubKey(inputPubKey):
+    return str(inputPubKey.n)
+
+def deserialisePubKey(inputSerialisedKey):
+    #g will always be n + 1
+    return paillier.PaillierPublicKey(int(inputSerialisedKey))
+
+def serialiseEncrypted(inputEncrypted):
+    return str(inputEncrypted.ciphertext()) + " " +str(inputEncrypted.exponent)
+
+def deserialiseEncrypted(pubKey, input):
+    cipher,exponent = input.split(" ")
+    output = paillier.EncryptedNumber(pubKey, int(cipher), int(exponent))
+    return output
+
+def serialisePriKey(input):
+    return binascii.b2a_base64(pickle.dumps(input)).decode('ascii')
+
+def deserialisePriKey(input):
+    return pickle.loads(binascii.a2b_base64(input.encode('ascii')))
 
 def read(file, schema1,i):
     conn = psycopg2.connect(host=_host,database=_database, user=_user, password=_password)
@@ -29,7 +51,7 @@ def read(file, schema1,i):
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(10)
+        time.sleep(1)
 
     #get table
     time.sleep(1)
@@ -78,58 +100,72 @@ def serialise(input):
 def deserialise(input):
     return pickle.loads(binascii.a2b_base64(input.encode('ascii')))
 
-init = np.linspace(-5, 5, 20)
-
-# We generate a 2D grid
-x1, x2 = np.meshgrid(init, init)
-
-# To get reproducable values, provide a seed value
-np.random.seed(1)
-
-# Z is the elevation of this 2D grid
-y = 3*x1 - 0.5*x2 + np.random.normal(size=x1.shape)
-
-x1 = x1.flatten()
-x2 = x2.flatten()
-y = y.flatten()
-
-alpha = 0.1
-n = float(len(x1))
-x1_theta = 0
-x2_theta = 0
-gradients = [0] * len(x1)
-
 def additionScenario():
     iterations = 100
-    party = sys.argv[1]
+    party = sys.argv[2]
+
+    init = np.linspace(-5, 5, 20)
+
+    # We generate a 2D grid
+    x1, x2 = np.meshgrid(init, init)
+
+    # To get reproducable values, provide a seed value
+    np.random.seed(1)
+
+    # Z is the elevation of this 2D grid
+    y = 3*x1 - 0.5*x2 + np.random.normal(size=x1.shape)
+
+    x1 = x1.flatten()
+    x2 = x2.flatten()
+    y = y.flatten()
+
+    alpha = 0.1
+    n = float(len(x1))
+    x1_theta = 0
+    x2_theta = 0
+    gradients = [0] * len(x1)
 
     #initialise
     if party == "y":
         #process keys
         pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
-        key = serialise(pubkey)
-        write([[key]], "pubkey/", "(key float)",-1)
+        key = serialisePubKey(pubkey)
+        write([[key]], "pubkey/", "(key text)",-1)
     elif party == "x1":
-        pubkey = deserialise((read("pubkey/", "(key float)",-1))[0][0])
+        pubkey = deserialisePubKey((read("pubkey/", "(key text)",-1))[0][0])
     elif party == "x2":
         #process keys
-        pubkey = deserialise((read("pubkey/", "(key float)",-1))[0][0])
+        pubkey = deserialisePubKey((read("pubkey/", "(key text)",-1))[0][0])
     for i in range(0, iterations):
         if party == "x1":
             x1_prediction = x1 * x1_theta
-            write(x1_prediction,"x1/"+str(i)+"/","(x1_prediction float)",i)
-            gradient = read("gradient/"+str(i)+"/","(gradient float)",i)
-            x1_theta = x1_theta - (alpha / n) * sum(gradient * x1)
+            x1_prediction_encrypted = list(map(lambda x: [serialiseEncrypted(pubkey.encrypt(x))], x1_prediction))
+            write(x1_prediction_encrypted,"x1/"+str(i)+"/","(x1_prediction text)",i)
+            g1 = read("gradient/"+str(i)+"/","(gradient float)",i)
+            print("g1 "+str(g1))
+            x1_gradient = [a[0]*b for a,b in zip(g1,x1)]
+            x1_diff = sum(x1_gradient)
+            x1_theta = x1_theta - (alpha / n) * x1_diff
+            print("x1 "+ str(x1_theta) + "["+str(x1_diff)+"]")
         elif party == "x2":
-            x1_prediction = read("x1/"+str(i)+"/","(x1_prediction float)",i)
+            x1_prediction_serialised = read("x1/"+str(i)+"/","(x1_prediction text)",i)
+            x1_prediction = list(map(lambda x: deserialiseEncrypted(pubkey,x[0]) , x1_prediction_serialised))
             x2_prediction = x1_prediction + x2 * x2_theta
-            write(x2_prediction,"x2/"+str(i)+"/","(x2_prediction float)",i)
-            gradient = read("gradient/"+str(i)+"/","(gradient float)",i)
-            x2_theta = x2_theta - (alpha / n) * sum(gradient * x2)
+            x2_prediction_encrypted = list(map(lambda x: [serialiseEncrypted(x)], x2_prediction))
+            write(x2_prediction_encrypted,"x2/"+str(i)+"/","(x2_prediction text)",i)
+            g2 = read("gradient/"+str(i)+"/","(gradient float)",i)
+            x2_gradient = [a[0]*b for a,b in zip(g2,x2)]
+            x2_diff = sum(x2_gradient)
+            x2_theta = x2_theta - (alpha / n) * x2_diff
+            print("x2 "+ str(x2_theta) + "["+str(x2_diff)+"]")
         elif party == "y":
-            x2_prediction = read("x2/"+str(i)+"/","(x2_prediction float)",i)
+            x2_predictionSerialised = read("x2/"+str(i)+"/","(x2_prediction text)",i)
+            x2_prediction = list(map(lambda x: prikey.decrypt(deserialiseEncrypted(pubkey,x[0])) , x2_predictionSerialised))
             gradient = x2_prediction - y
-            write(gradient,"gradient/"+str(i)+"/","(gradient float)",i)
+
+            print("yg "+str(gradient))
+            gradientOut = list(map(lambda x: [x] ,gradient))
+            write(gradientOut,"gradient/"+str(i)+"/","(gradient float)",i)
     print("FINISHED")
 
 
