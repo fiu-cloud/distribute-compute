@@ -1,8 +1,10 @@
 0. Order tables
-1. Encrypt gradients
 2. Docker container will download python prgram
+3. 1M rows
 3. Externalise all parameters (docker run)
 4. Code tidyup
+5. More parameters
+1. Encrypt gradients (back to keyholder)
 5. Retry on timeout
     Traceback (most recent call last):
       File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 135, in <module>

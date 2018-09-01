@@ -25,6 +25,15 @@ def deserialiseEncrypted(pubKey, input):
     output = paillier.EncryptedNumber(pubKey, int(cipher), int(exponent))
     return output
 
+def writeOrdered(input):
+    return [x + [i] for i,x in list(enumerate(input))]
+
+def readOrdered(data):
+    def getKey(elem):
+        return elem[len(elem)-1]
+    data.sort(key=getKey)
+    return [x[:len(x)-1] for x in data]
+
 def serialisePriKey(input):
     return binascii.b2a_base64(pickle.dumps(input)).decode('ascii')
 
@@ -32,6 +41,7 @@ def deserialisePriKey(input):
     return pickle.loads(binascii.a2b_base64(input.encode('ascii')))
 
 def read(file, schema1,i):
+    schema1 = "("+schema1 +",row_index int)"
     conn = psycopg2.connect(host=_host,database=_database, user=_user, password=_password)
 
     poll_file = "finished_"+file
@@ -63,10 +73,12 @@ def read(file, schema1,i):
 
     cur.close()
     conn.close()
-    return out
+    return readOrdered(out)
 
 
-def write(upload, file, schema,i):
+def write(data, file, schema,i):
+    schema = "("+schema +",row_index int)"
+    upload = writeOrdered(data)
     conn = psycopg2.connect(host=_host,database=_database, user=_user, password=_password)
     # poll status table
     poll_file = "finished_"+file
@@ -130,42 +142,41 @@ def additionScenario():
         #process keys
         pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
         key = serialisePubKey(pubkey)
-        write([[key]], "pubkey/", "(key text)",-1)
+        write([[key]], "pubkey/", "key text",-1)
     elif party == "x1":
-        pubkey = deserialisePubKey((read("pubkey/", "(key text)",-1))[0][0])
+        pubkey = deserialisePubKey((read("pubkey/", "key text",-1))[0][0])
     elif party == "x2":
         #process keys
-        pubkey = deserialisePubKey((read("pubkey/", "(key text)",-1))[0][0])
+        pubkey = deserialisePubKey((read("pubkey/", "key text",-1))[0][0])
     for i in range(0, iterations):
         if party == "x1":
             x1_prediction = x1 * x1_theta
             x1_prediction_encrypted = list(map(lambda x: [serialiseEncrypted(pubkey.encrypt(x))], x1_prediction))
-            write(x1_prediction_encrypted,"x1/"+str(i)+"/","(x1_prediction text)",i)
-            g1 = read("gradient/"+str(i)+"/","(gradient float)",i)
-            print("g1 "+str(g1))
+            write(x1_prediction_encrypted,"x1/"+str(i)+"/","x1_prediction text",i)
+            g1 = read("gradient/"+str(i)+"/","gradient float",i)
             x1_gradient = [a[0]*b for a,b in zip(g1,x1)]
             x1_diff = sum(x1_gradient)
             x1_theta = x1_theta - (alpha / n) * x1_diff
             print("x1 "+ str(x1_theta) + "["+str(x1_diff)+"]")
         elif party == "x2":
-            x1_prediction_serialised = read("x1/"+str(i)+"/","(x1_prediction text)",i)
+            x1_prediction_serialised = read("x1/"+str(i)+"/","x1_prediction text",i)
             x1_prediction = list(map(lambda x: deserialiseEncrypted(pubkey,x[0]) , x1_prediction_serialised))
             x2_prediction = x1_prediction + x2 * x2_theta
             x2_prediction_encrypted = list(map(lambda x: [serialiseEncrypted(x)], x2_prediction))
-            write(x2_prediction_encrypted,"x2/"+str(i)+"/","(x2_prediction text)",i)
-            g2 = read("gradient/"+str(i)+"/","(gradient float)",i)
+            write(x2_prediction_encrypted,"x2/"+str(i)+"/","x2_prediction text",i)
+            g2 = read("gradient/"+str(i)+"/","gradient float",i)
             x2_gradient = [a[0]*b for a,b in zip(g2,x2)]
             x2_diff = sum(x2_gradient)
             x2_theta = x2_theta - (alpha / n) * x2_diff
             print("x2 "+ str(x2_theta) + "["+str(x2_diff)+"]")
         elif party == "y":
-            x2_predictionSerialised = read("x2/"+str(i)+"/","(x2_prediction text)",i)
+            x2_predictionSerialised = read("x2/"+str(i)+"/","x2_prediction text",i)
             x2_prediction = list(map(lambda x: prikey.decrypt(deserialiseEncrypted(pubkey,x[0])) , x2_predictionSerialised))
             gradient = x2_prediction - y
 
-            print("yg "+str(gradient))
+            #print("yg "+str(gradient))
             gradientOut = list(map(lambda x: [x] ,gradient))
-            write(gradientOut,"gradient/"+str(i)+"/","(gradient float)",i)
+            write(gradientOut,"gradient/"+str(i)+"/","gradient float",i)
     print("FINISHED")
 
 
