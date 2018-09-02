@@ -1,6 +1,6 @@
 
 # Description
-This docker image is a self contained example doing distributed linear regression. 
+This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). 
 
 # Scenario
 There are 3 parties. y, x1, x2. Party y contains the labels and party x1 and x2 each contain a predictor. 
@@ -15,6 +15,7 @@ docker stop x1_container
 docker rm x1_container
 docker stop x2_container
 docker rm x2_container
+echo "all removed"
 ```
 
 ## Run scenario
@@ -92,15 +93,27 @@ docker run --name x2_container \
 -i -t -p 5430:5432 -d fiucloud/compute
 ```
 
-### 4. Inspect Results
+### 4. Inspect Results 
 
+See the party's thetas. This can be run at any time to monitor the progress.
+Format of this is
+```party theta[change]```<br /><br />
 ##### Party x1 
+actual = 3
 ```
-docker exec -i -t x1_container cat thetas.log
+docker exec x1_container cat thetas.log
+```
+```
+First 3 iterations along the lines of...
+x1 3.1135774539365526[-3113.5774539365525]
+x1 3.055918612196987[57.65884173956543]
+x1 3.056986368525498[-1.0677563285108405]
 ```
 
+<br />
 
 ##### Party x2
+actual = -0.5
 ```
-docker exec -i -t x2_container cat thetas.log
+docker exec x2_container cat thetas.log
 ```

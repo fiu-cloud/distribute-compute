@@ -9,3 +9,7 @@ $GP_HOST \
 $GP_DATABASE \
 $GP_USER \
 $GP_PASSWORD
+
+while true; do
+  sleep 3600
+done

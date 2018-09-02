@@ -25,16 +25,23 @@ RUN git fetch --all --tags --prune
 RUN git checkout tags/1.4.0
 RUN cp -r phe /usr/local/lib/python3.6/site-packages
 
+
+
 COPY gpdb-entrypoint.sh /usr/local/bin/gpdb-entrypoint.sh
 RUN chmod 755 /usr/local/bin/gpdb-entrypoint.sh
 
 COPY setup-gp.sh /usr/local/bin/setup-gp.sh
 RUN chmod 755 /usr/local/bin/setup-gp.sh
 
-COPY compute/distributed_linear_regression_3_parties.py /home/gpadmin/program.py
-COPY compute/gpdb_io.py /home/gpadmin/gpdb_io.py
-COPY compute/serialisation.py /home/gpadmin/serialisation.py
-RUN chmod 755 /home/gpadmin/program.py /home/gpadmin/gpdb_io.py /home/gpadmin/serialisation.py
+RUN mkdir /home/gpadmin/compute
+RUN chmod 755 /home/gpadmin/compute
+COPY distributed_linear_regression_3_parties.py /home/gpadmin/program.py
+COPY compute/gpdb_io.py /home/gpadmin/compute/gpdb_io.py
+COPY compute/serialisation.py /home/gpadmin/compute/serialisation.py
+RUN chmod 755 /home/gpadmin/compute \
+/home/gpadmin/program.py \
+/home/gpadmin/compute/gpdb_io.py \
+/home/gpadmin/compute/serialisation.py
 
 COPY s3.conf /home/gpadmin/s3.conf
 RUN chmod 777 /home/gpadmin/s3.conf
