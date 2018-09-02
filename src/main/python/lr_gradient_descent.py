@@ -1,20 +1,25 @@
-import phe.paillier as paillier, psycopg2,uuid,time,psycopg2.extras,sys,pickle,binascii,datetime, numpy as np
-id = sys.argv[1]
-print("WORKSDPACE "+ id)
-_host="localhost"
-_database="gpadmin"
-_user="gpadmin"
-_password="greenplum"
-_s3_endpoint="s3-ap-southeast-2.amazonaws.com"
-_s3_bucket="alerting-project/"+id
-_s3_finished="_finished_"
+import phe.paillier as paillier, psycopg2,uuid,time,psycopg2.extras,pickle,binascii,datetime, numpy as np,sys
+party = sys.argv[1]
+_s3_endpoint = sys.argv[2]
+_s3_bucket = sys.argv[3]
+_host = sys.argv[4]
+_database = sys.argv[5]
+_user = sys.argv[6]
+_password = sys.argv[7]
+_s3_finished = "_finished_"
+# experiment parameters
+iterations = 10
+alpha = 0.1
+
+#setup log
+status = open("io_status.log", "a",1)
+thetas = open("thetas.txt", "a",1)
 
 
 def serialisePubKey(inputPubKey):
     return str(inputPubKey.n)
 
 def deserialisePubKey(inputSerialisedKey):
-    #g will always be n + 1
     return paillier.PaillierPublicKey(int(inputSerialisedKey))
 
 def serialiseEncrypted(inputEncrypted):
@@ -69,7 +74,7 @@ def read(file, schema1,i):
     cur.execute("CREATE READABLE EXTERNAL TABLE "+table+" "+schema1+" LOCATION ('s3://"+_s3_endpoint+"/"+_s3_bucket+"/"+data_file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
     cur.execute("SELECT * FROM "+table)
     out = cur.fetchall()
-    print(str(datetime.datetime.now()) + " "+str(i) + " : READ ROWS "+id + " / "+ file + " COUNT="+str(len(out)))
+    status.write(str(datetime.datetime.now()) + " "+str(i) + " : READ ROWS "+id + " / "+ file + " COUNT="+str(len(out))+"\r\n")
 
     cur.close()
     conn.close()
@@ -102,52 +107,41 @@ def write(data, file, schema,i):
     conn.commit()
     cur.execute("INSERT INTO "+pollTable+" (value) VALUES (%s)","1")
     conn.commit()
-    print(str(datetime.datetime.now()) + " "+str(i) + " : WROTE ROWS "+id + " / "+ file + " COUNT="+str(len(upload)))
+    status.write(str(datetime.datetime.now()) + " "+str(i) + " : WROTE ROWS "+id + " / "+ file + " COUNT="+str(len(upload))+"\r\n")
     conn.commit()
     cur.close()
 
-def serialise(input):
-    return binascii.b2a_base64(pickle.dumps(input)).decode('ascii')
 
-def deserialise(input):
-    return pickle.loads(binascii.a2b_base64(input.encode('ascii')))
-
-def additionScenario():
-    iterations = 100
-    party = sys.argv[2]
-
+def main():
+    # generate synthetic data & initialise variables
     init = np.linspace(-5, 5, 20)
-
-    # We generate a 2D grid
     x1, x2 = np.meshgrid(init, init)
-
-    # To get reproducable values, provide a seed value
     np.random.seed(1)
-
-    # Z is the elevation of this 2D grid
     y = 3*x1 - 0.5*x2 + np.random.normal(size=x1.shape)
-
     x1 = x1.flatten()
     x2 = x2.flatten()
     y = y.flatten()
-
-    alpha = 0.1
     n = float(len(x1))
     x1_theta = 0
     x2_theta = 0
-    gradients = [0] * len(x1)
 
-    #initialise
+    # initialise
     if party == "y":
-        #process keys
+        x1 = []
+        x2 = []
         pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
         key = serialisePubKey(pubkey)
         write([[key]], "pubkey/", "key text",-1)
     elif party == "x1":
+        y = []
+        x2 = []
         pubkey = deserialisePubKey((read("pubkey/", "key text",-1))[0][0])
     elif party == "x2":
-        #process keys
+        y = []
+        x1 = []
         pubkey = deserialisePubKey((read("pubkey/", "key text",-1))[0][0])
+
+    # gradient descent
     for i in range(0, iterations):
         if party == "x1":
             x1_prediction = x1 * x1_theta
@@ -157,7 +151,7 @@ def additionScenario():
             x1_gradient = [a[0]*b for a,b in zip(g1,x1)]
             x1_diff = sum(x1_gradient)
             x1_theta = x1_theta - (alpha / n) * x1_diff
-            print("x1 "+ str(x1_theta) + "["+str(x1_diff)+"]")
+            thetas.write("x1 "+ str(x1_theta) + "["+str(x1_diff)+"]\r\n")
         elif party == "x2":
             x1_prediction_serialised = read("x1/"+str(i)+"/","x1_prediction text",i)
             x1_prediction = list(map(lambda x: deserialiseEncrypted(pubkey,x[0]) , x1_prediction_serialised))
@@ -168,17 +162,14 @@ def additionScenario():
             x2_gradient = [a[0]*b for a,b in zip(g2,x2)]
             x2_diff = sum(x2_gradient)
             x2_theta = x2_theta - (alpha / n) * x2_diff
-            print("x2 "+ str(x2_theta) + "["+str(x2_diff)+"]")
+            thetas.write("x2 "+ str(x2_theta) + "["+str(x2_diff)+"]\r\n")
         elif party == "y":
             x2_predictionSerialised = read("x2/"+str(i)+"/","x2_prediction text",i)
             x2_prediction = list(map(lambda x: prikey.decrypt(deserialiseEncrypted(pubkey,x[0])) , x2_predictionSerialised))
             gradient = x2_prediction - y
-
-            #print("yg "+str(gradient))
             gradientOut = list(map(lambda x: [x] ,gradient))
             write(gradientOut,"gradient/"+str(i)+"/","gradient float",i)
-    print("FINISHED")
 
 
 
-additionScenario()
+main()

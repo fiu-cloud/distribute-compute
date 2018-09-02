@@ -10,7 +10,7 @@ from statsmodels.formula.api import ols
 # Analysis of Variance (ANOVA) on linear models
 from statsmodels.stats.anova import anova_lm
 
-init = np.linspace(-5, 5, 20)
+init = np.linspace(-5, 5, 1000)
 
 # We generate a 2D grid
 x1, x2 = np.meshgrid(init, init)

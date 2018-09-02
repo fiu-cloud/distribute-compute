@@ -1,9 +1,6 @@
-0. Order tables
-2. Docker container will download python prgram
-3. 1M rows
-3. Externalise all parameters (docker run)
-4. Code tidyup
-5. More parameters
+1. Read doesn't work sometimes, have debugging info
+2. Code tidyup
+3. More complex scenario
 1. Encrypt gradients (back to keyholder)
 5. Retry on timeout
     Traceback (most recent call last):
