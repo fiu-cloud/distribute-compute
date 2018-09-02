@@ -1,15 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas
 
-# For 3d plots. This import is necessary to have 3D plotting below
-from mpl_toolkits.mplot3d import Axes3D
-
-# For statistics. Requires statsmodels 5.0 or more
-from statsmodels.formula.api import ols
-# Analysis of Variance (ANOVA) on linear models
-from statsmodels.stats.anova import anova_lm
-
+iterations = 20
 init = np.linspace(-5, 5, 1000)
 
 # We generate a 2D grid
@@ -32,7 +23,7 @@ x1_theta = 0
 x2_theta = 0
 gradients = [0] * len(x1)
 
-for i in range(0, 100):
+for i in range(0, iterations):
 
     #predict x1
     x1_prediction = x1 * x1_theta

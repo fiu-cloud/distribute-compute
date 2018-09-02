@@ -31,8 +31,10 @@ RUN chmod 755 /usr/local/bin/gpdb-entrypoint.sh
 COPY setup-gp.sh /usr/local/bin/setup-gp.sh
 RUN chmod 755 /usr/local/bin/setup-gp.sh
 
-COPY src/main/python/lr_gradient_descent.py /home/gpadmin/program.py
-RUN chmod 755 /home/gpadmin/program.py
+COPY compute/distributed_linear_regression_3_parties.py /home/gpadmin/program.py
+COPY compute/gpdb_io.py /home/gpadmin/gpdb_io.py
+COPY compute/serialisation.py /home/gpadmin/serialisation.py
+RUN chmod 755 /home/gpadmin/program.py /home/gpadmin/gpdb_io.py /home/gpadmin/serialisation.py
 
 COPY s3.conf /home/gpadmin/s3.conf
 RUN chmod 777 /home/gpadmin/s3.conf

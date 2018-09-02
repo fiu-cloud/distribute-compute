@@ -1,39 +1,19 @@
-
+import compute.serialisation as ser
 import time, phe.paillier as paillier, random, pickle,binascii,math,sys,base64
 pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
 
 
 iterations = 1000
 
-def serialisePubKey(inputPubKey):
-    return str(inputPubKey.n)
-
-def deserialisePubKey(inputSerialisedKey):
-    #g will always be n + 1
-    return paillier.PaillierPublicKey(int(inputSerialisedKey))
-
-def serialiseEncrypted(inputEncrypted):
-    return str(inputEncrypted.ciphertext()) + " " +str(inputEncrypted.exponent)
-
-def deserialiseEncrypted(pubKey, input):
-    cipher,exponent = input.split(" ")
-    output = paillier.EncryptedNumber(pubKey, int(cipher), int(exponent))
-    return output
-
-def serialisePriKey(input):
-    return binascii.b2a_base64(pickle.dumps(input)).decode('ascii')
-
-def deserialisePriKey(input):
-    return pickle.loads(binascii.a2b_base64(input.encode('ascii')))
 
 print("Serialisation test 1 : "+ str(math.fabs(math.pi * 3 - prikey.decrypt(pubkey.encrypt(math.pi) + pubkey.encrypt(math.pi) * 2)) < 0.01))
-pubkey2 = deserialisePubKey(serialisePubKey(pubkey))
-prikey2 = deserialisePriKey(serialisePriKey(prikey))
+pubkey2 = ser.deserialisePubKey(ser.serialisePubKey(pubkey))
+prikey2 = ser.deserialisePriKey(ser.serialisePriKey(prikey))
 print("Serialisation test 2 : "+ str(math.fabs(math.pi * 3 - prikey.decrypt(pubkey.encrypt(math.pi) + pubkey2.encrypt(math.pi) * 2)) < 0.01))
 print("Serialisation test 3 : "+ str(math.fabs(math.pi * 3 - prikey2.decrypt(pubkey.encrypt(math.pi) + pubkey.encrypt(math.pi) * 2)) < 0.01))
-partA = deserialiseEncrypted(pubkey2,serialiseEncrypted(pubkey.encrypt(math.pi)))
+partA = ser.deserialiseEncrypted(pubkey2,ser.serialiseEncrypted(pubkey.encrypt(math.pi)))
 partB = pubkey2.encrypt(math.pi) * 2
-partC = deserialiseEncrypted(pubkey,serialiseEncrypted(pubkey2.encrypt(math.pi))) * 3
+partC = ser.deserialiseEncrypted(pubkey,ser.serialiseEncrypted(pubkey2.encrypt(math.pi))) * 3
 print("Serialisation test 4 : "+ str(math.fabs((math.pi * 12 - prikey2.decrypt((partA + partB + partC)*2))) < 0.01))
 
 
@@ -59,7 +39,7 @@ print("ENCRYPTION (ops/second) "+str(elapsed))
 encrypted2 = []
 start = time.time()
 for i in range(0, iterations):
-    encrypted2.append(deserialiseEncrypted(pubkey,serialiseEncrypted(encrypted[i])))
+    encrypted2.append(ser.deserialiseEncrypted(pubkey,ser.serialiseEncrypted(encrypted[i])))
 
 total_elapsed = time.time() - start
 elapsed = 1/(total_elapsed / iterations)

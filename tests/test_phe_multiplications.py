@@ -2,7 +2,7 @@ import math
 import phe.paillier as paillier
 pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
 
-# when iterations more than 17 (key length 1024) irrational test intermittently fails. Result either incorrect (random) or overflow
+# TODO: fails when iterations more than 17 (key length 1024) irrational test intermittently fails. Result either incorrect (random) or overflow
 iterations = 17
 
 # factorial test
