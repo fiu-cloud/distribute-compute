@@ -15,7 +15,7 @@ io.init(_host,_database,_user,_password,_s3_endpoint, _s3_bucket)
 # start experiment parameters (set these in the code as need to be shared by all parties)
 alpha = 0.1
 iterations = 10
-dataset_size = 100
+dataset_size = 20
 # finish experiment parameters
 
 # write the thetas to a local store
@@ -26,7 +26,7 @@ def main():
     init = np.linspace(-5, 5, math.sqrt(dataset_size))
     x1, x2 = np.meshgrid(init, init)
     np.random.seed(1)
-    y = 3*x1 - 0.5*x2 + np.random.normal(size=x1.shape)
+    y = 31*x1 - 5.5*x2 + np.random.normal(size=x1.shape)
     x1 = x1.flatten()
     x2 = x2.flatten()
     y = y.flatten()

@@ -1,6 +1,7 @@
 import psycopg2,uuid,time,psycopg2.extras,datetime
 
 status = open("gpdb_io.log", "a",1)
+polling = open("gpdb_polling.log", "a",1)
 
 host = ""
 database = ""
@@ -47,12 +48,14 @@ def read(file, schema1,i):
     cur.execute("CREATE READABLE EXTERNAL TABLE "+pollTable+" (value text) LOCATION ('s3://"+s3_endpoint+"/"+s3_bucket+"/"+poll_file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
     cur.close()
     while True:
+        polling.write(str(datetime.datetime.now()) + " "+str(i) + " : POLLING "+pollTable + " / "+ poll_file + "\r\n" )
         cur = conn.cursor()
         cur.execute("SELECT * FROM "+pollTable)
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(1)
+        time.sleep(15)
+    polling.write(str(datetime.datetime.now()) + " "+str(i) + " : ##### FINISHED POLLING #### "+pollTable + " / "+ poll_file + "\r\n")
 
     #get table
     time.sleep(1)
@@ -83,13 +86,12 @@ def write(data, file, schema,i):
     stagingTable = "staging_"+id
 
     cur.execute("CREATE WRITABLE EXTERNAL TABLE "+pollTable+" (value text) LOCATION ('s3://"+s3_endpoint+"/"+s3_bucket+"/"+poll_file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
-
     cur.execute("CREATE WRITABLE EXTERNAL TABLE "+table+" "+schema+" LOCATION ('s3://"+s3_endpoint+"/"+s3_bucket+"/"+data_file+" config=/home/gpadmin/s3.conf') FORMAT 'csv'")
     cur.execute("CREATE TABLE "+stagingTable+" "+schema)
-
     psycopg2.extras.execute_values(cur, "insert into "+stagingTable+" VALUES %s", upload, template=None, page_size=1000)
-
     cur.execute("INSERT INTO "+table + " SELECT * FROM " + stagingTable)
+    conn.commit()
+    cur.execute("DROP TABLE "+stagingTable)
     conn.commit()
     cur.execute("INSERT INTO "+pollTable+" (value) VALUES (%s)","1")
     conn.commit()

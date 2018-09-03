@@ -38,6 +38,9 @@ Setup an S3 bucket and generate secret and accessid for this.
 
 We assume the S3 endpoint is Sydney in the example ```s3-ap-southeast-2.amazonaws.com```. Scenario ```y = 3*x1 - 0.5*x2```.
 
+Ensure your docker containers have enough disc space and memory.
+
+For 1M rows: 100G disc & 12GB ram / container is recommended. Note: Only 1 container does work at any time (others are blocked) so can use shared resource on a local deployment. Temporary GP staging tables are automatically removed after IO
 <br />
 
 ##### Party Y (private key holder & labels)
@@ -116,4 +119,9 @@ x1 3.056986368525498[-1.0677563285108405]
 actual = -0.5
 ```
 docker exec x2_container cat thetas.log
+```
+
+### 5. Inspect progress
+```
+docker exec (y_container) cat gpdb_io.log
 ```
