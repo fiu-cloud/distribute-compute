@@ -1,4 +1,3 @@
-
 # Description
 This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). 
 
@@ -117,6 +116,7 @@ x1 3.056986368525498[-1.0677563285108405]
 
 ##### Party x2
 actual = -0.5
+Note (It's imporbable this theta will converge very well due to the noise. If it were are large value, such as -50 would converge)
 ```
 docker exec x2_container cat thetas.log
 ```
