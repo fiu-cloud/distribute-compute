@@ -1,4 +1,4 @@
-import psycopg2,uuid,time,psycopg2.extras,datetime
+import psycopg2,uuid,time,psycopg2.extras,datetime, random
 
 status = open("gpdb_io.log", "a",1)
 polling = open("gpdb_polling.log", "a",1)
@@ -54,7 +54,8 @@ def read(file, schema1,i):
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(15)
+        time.sleep(10)
+        time.sleep(5 * random.random()) # probably not necessary
     polling.write(str(datetime.datetime.now()) + " "+str(i) + " : ##### FINISHED POLLING #### "+pollTable + " / "+ poll_file + "\r\n")
 
     #get table

@@ -1,10 +1,29 @@
 # Description
 This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). 
 
+# Architecture
+Essentially this is a very simple system that executes deterministic privacy-preserving non-concurrent (but distributed) algorithms among 2+ parties :).  It should be easy to understand and convey to partner organisations.
+
+Our term 'distributed' means that each party holds different data which they do not want to expose to other parties, but apply an algorithm on it.
+
+Uses a central file store (AWS S3) to orchestrate the containers (run the algorithm) and transfer data among parties. Assumption is that at any time only 1 container will be doing work (analogous to the game pass the parcel). While a container is doing work all other containers are blocked on am I/O read poll to S3. As this is not a concurrent system; race conditions, dead-lock, live-lock etc... do not apply
+
+A more complex system would be required if there are any of the following are requirements 
+ * Non deterministic algorithm (DAG data-flows) 
+ * Parallel processing among 2+ containers (2 or more parcels in 'pass the parcel') . If you need this use a high level messaging system such as akka
+ * Data doesnt't fit in memory (~ 1M encrypted single column rows requires 10GB or ram. If you need this, re-write this system in Spark or some type of MPP system (eg. GP)
+
+
 # Scenario
 There are 3 parties. y, x1, x2. Party y contains the labels and party x1 and x2 each contain a predictor. 
 Using gradient descent we are calculating ```y = 3*x1 - 0.5*x2```.
 We generate random synthetic data (with random noise). Please refer to ```test/test_local_linear_regression.py``` to see a simple local example of this. The actual distributed code (using paillier homomorphic encryption) is in the folder ```compute```. To change experiment parameters please change them in ```distributed_linear_regression_3_parties.py```. S3 and greenplum configuration should be set when you run the docker image (please see below).  
+
+# Data Flow
+The data flow is linear. Each operation reads from an S3 'folder' and writes to **another** S3 folder. Only **1** party can subscribe to an S3 folder which will be produces by another party (ie. 1:1 messaging). If you break this paradigm the system will return unexpected results as its not designed to be concurrent or run non-deterministic algorithms.
+
+A use case is gradient decent which can be defined as :
+
 
 ## Remove scenario (all containers)
 ```
@@ -125,3 +144,5 @@ docker exec x2_container cat thetas.log
 ```
 docker exec (y_container) cat gpdb_io.log
 ```
+
+

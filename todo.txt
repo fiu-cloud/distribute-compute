@@ -1,8 +1,19 @@
-1. S3 Read obsessionally doesn't work, debug this
-2. Code tidyup
-3. More complex scenario
-1. Encrypt gradients (back to keyholder)?
-5. Retry on timeout
+-1. Descrptions
+ 0. alpha is small enough
+ 2. Change lamdas into list comprehensions
+ 3. S3 Read occasionally doesn't work, debug this
+ 4. Code tidyup
+ 5. More complex scenario
+ 6. Encrypt gradients (back to keyholder)?
+ 7. Retry on timeout
+
+    on MAC os:
+        sudo vi /etc/ntp.conf
+        sudo ntpd restart
+
+    https://github.com/docker/for-mac/issues/2076
+    https://www.allcloud.io/how-to/how-to-fix-amazon-s3-requesttimetooskewed/
+
     Traceback (most recent call last):
       File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 135, in <module>
         additionScenario()
