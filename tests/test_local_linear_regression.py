@@ -10,7 +10,7 @@ x1, x2 = np.meshgrid(init, init)
 np.random.seed(1)
 
 # Z is the elevation of this 2D grid
-y = 3*x1 - 0.5*x2 + np.random.normal(size=x1.shape)
+y = 31*x1 - 5.5*x2 + np.random.normal(size=x1.shape)
 
 
 x1 = x1.flatten()

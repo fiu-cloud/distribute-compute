@@ -54,8 +54,8 @@ def read(file, schema1,i):
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(10)
-        time.sleep(5 * random.random()) # probably not necessary
+        time.sleep(10) # don't make this too small as there is a $ cost with reading S3
+        time.sleep(5 * random.random()) # mitigate dead locks (extremely unlikely even without this)
     polling.write(str(datetime.datetime.now()) + " "+str(i) + " : ##### FINISHED POLLING #### "+pollTable + " / "+ poll_file + "\r\n")
 
     #get table

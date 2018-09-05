@@ -1,39 +1,4 @@
--1. Descrptions
- 0. alpha is small enough
- 2. Change lamdas into list comprehensions
- 3. S3 Read occasionally doesn't work, debug this
- 4. Code tidyup
- 5. More complex scenario
- 6. Encrypt gradients (back to keyholder)?
- 7. Retry on timeout
-
-    on MAC os:
-        sudo vi /etc/ntp.conf
-        sudo ntpd restart
-
-    https://github.com/docker/for-mac/issues/2076
-    https://www.allcloud.io/how-to/how-to-fix-amazon-s3-requesttimetooskewed/
-
-    Traceback (most recent call last):
-      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 135, in <module>
-        additionScenario()
-      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 109, in additionScenario
-        temp = read("a/"+str(i)+"/",schema,i)
-      File "/Users/michaelwalker/IdeaProjects/distribute-compute/src/main/python/mapping.py", line 38, in read
-        cur.execute("SELECT * FROM "+table)
-    psycopg2.InternalError: s3_import: could not read data: reader_transfer_data caught a S3LogicError exception: AWS returns error RequestTimeTooSkewed : The difference between the request time and the current time is too large., Function: fetchData, File: src/s3interface.cpp(340). (gpcloud.cpp:304)  (seg0 slice1 172.17.0.2:40000 pid=10377) (cdbdisp.c:254)
-    DETAIL:  External table s3_ba77a334_a6a1_11e8_b16e_acde48001122, line 483212 of file s3://s3-ap-southeast-2.amazonaws.com/alerting-project/data_a/7/ config=/home/gpadmin/s3.conf
-
-     File "program.py", line 84, in <module>
-        main()
-      File "program.py", line 76, in main
-        x2_prediction_serialised =io.read("x2/"+str(i)+"/","x2_prediction text",i)
-      File "/home/gpadmin/compute/gpdb_io.py", line 64, in read
-        cur.execute("SELECT * FROM "+table)
-    psycopg2.InternalError: s3_import: could not read data: reader_transfer_data caught a S3LogicError exception: AWS returns error RequestTimeTooSkewed : The difference between the request time and the current time is too large., Function: fetchData, File: src/s3interface.cpp(340). (gpcloud.cpp:304)  (seg1 slice1 172.17.0.2:40001 pid=4150) (cdbdisp.c:254)
-    DETAIL:  External table s3_c59c2718_af6a_11e8_bc90_0242ac110002, file s3://s3-ap-southeast-2.amazonaws.com/alerting-project/a/data_x2/1/ config=/home/gpadmin/s3.conf
-
-
-
-4. RoundHack
-5. Logistic
+ 1. Change lamdas into list comprehensions
+ 2. Code tidyup
+ 3. Randomise thetas
+ 4. Roundhack
