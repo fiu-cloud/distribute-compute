@@ -1,7 +1,7 @@
 #!/bin/bash
 exec &>> gpdb-entrypoint.log
 setup-gp.sh
-python3.6 program.py \
+python3.6 $PROGRAM \
 $PARTY \
 $S3_ENDPOINT \
 $S3_BUCKET \

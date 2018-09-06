@@ -9,8 +9,9 @@ _database = sys.argv[5]
 _user = sys.argv[6]
 _password = sys.argv[7]
 _s3_finished = "_finished_"
+_poll_seconds = 10
 
-io.init(_host,_database,_user,_password,_s3_endpoint, _s3_bucket)
+io.init(_host,_database,_user,_password,_s3_endpoint, _s3_bucket,_poll_seconds)
 
 # start experiment parameters (set these in the code as need to be shared by all parties)
 alpha = 0.1

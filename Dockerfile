@@ -35,13 +35,15 @@ RUN chmod 755 /usr/local/bin/setup-gp.sh
 
 RUN mkdir /home/gpadmin/compute
 RUN chmod 755 /home/gpadmin/compute
-COPY distributed_linear_regression_3_parties.py /home/gpadmin/program.py
+COPY distributed_linear_regression_3_parties.py /home/gpadmin/distributed_linear_regression_3_parties.py
+COPY encrypted_multiplication_using_paillier.py /home/gpadmin/encrypted_multiplication_using_paillier.py
 COPY compute/gpdb_io.py /home/gpadmin/compute/gpdb_io.py
 COPY compute/serialisation.py /home/gpadmin/compute/serialisation.py
 RUN chmod 755 /home/gpadmin/compute \
-/home/gpadmin/program.py \
 /home/gpadmin/compute/gpdb_io.py \
-/home/gpadmin/compute/serialisation.py
+/home/gpadmin/compute/serialisation.py \
+/home/gpadmin/distributed_linear_regression_3_parties.py \
+/home/gpadmin/encrypted_multiplication_using_paillier.py
 
 COPY s3.conf /home/gpadmin/s3.conf
 RUN chmod 777 /home/gpadmin/s3.conf

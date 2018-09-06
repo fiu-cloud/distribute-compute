@@ -9,15 +9,16 @@ user = ""
 password = ""
 s3_endpoint = ""
 s3_bucket = ""
-
-def init(in_host, in_database, in_user, in_password, in_s3_endpoint, in_s3_bucket):
-    global host, database, user, password, s3_endpoint, s3_bucket
+poll_seconds = 60
+def init(in_host, in_database, in_user, in_password, in_s3_endpoint, in_s3_bucket, in_poll_seconds ):
+    global host, database, user, password, s3_endpoint, s3_bucket, poll_seconds
     host = in_host
     database = in_database
     user = in_user
     password = in_password
     s3_bucket = in_s3_bucket
     s3_endpoint = in_s3_endpoint
+    poll_seconds = in_poll_seconds
 
 
 
@@ -54,8 +55,8 @@ def read(file, schema1,i):
         if cur.rowcount == 1:
             break
         cur.close()
-        time.sleep(10) # don't make this too small as there is a $ cost with reading S3
-        time.sleep(5 * random.random()) # mitigate dead locks (extremely unlikely even without this)
+        time.sleep(poll_seconds) # don't make this too small as there is a $ cost with reading S3
+        time.sleep(poll_seconds * random.random()) # mitigate dead locks (extremely unlikely even without this)
     polling.write(str(datetime.datetime.now()) + " "+str(i) + " : ##### FINISHED POLLING #### "+pollTable + " / "+ poll_file + "\r\n")
 
     #get table

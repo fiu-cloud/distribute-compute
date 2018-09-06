@@ -1,4 +1,0 @@
- 1. Change lamdas into list comprehensions
- 2. Code tidyup
- 3. Randomise thetas
- 4. Roundhack

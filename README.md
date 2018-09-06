@@ -1,8 +1,13 @@
 # Description
-This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). This image can be easily modified for other models. We also discuss easy modifications for logistic regression
+This docker image is a self contained example of privacy preserving distributed algorithms (using partially homommorphic - Paillier). Two examples are included:
+* Gradient descent  (linear regression, logistic regression)
+* Multiplication of 2 encrypted numbers 
+
+This image can be easily modified for other algorithms.
+
 
 # Architecture
-This is a simple system that executes deterministic privacy-preserving non-concurrent (but distributed) algorithms among 2 or more parties.  It should be easy to understand and convey to partner organisations.
+This is a simple system that executes privacy-preserving non-concurrent (but distributed) algorithms among 2 or more parties.  It should be easy to understand and convey to partner organisations.
 
 Our term 'distributed' is defined as each party holds different data which they want others to calculate on without exposing the raw data itself.
 
@@ -18,12 +23,12 @@ A more complex system would be required if there are any of the following are re
  * Data doesnt't fit in memory (~ 1M encrypted single column rows requires 10GB or ram. If you need this, re-write this system in Spark or some type of MPP system (eg. GP)
 
 
-# Scenario
+# Gradient Descent Scenario
 There are 3 parties. y, x1, x2. Party y hosts the labels and party x1 and x2 each host a predictor. 
 Using gradient descent we are calculating ```y = 31*x1 - 5.5*x2```.
 We generate random synthetic data (with random noise). Please refer to ```test/test_local_linear_regression.py``` to see a simple local example of this. The actual distributed code (using paillier homomorphic encryption) is in ```distributed_linear_regression_3_parties.py```. Edit this file to change experiment parameters (such as: constants, iteration count, number of rows, learning rate). S3 and greenplum configuration should be set when you run the docker image (please see below).  
 
-# Data Flow
+## Data Flows
 Each operation reads from an S3 'folder' and writes to **another** S3 folder. 
 
 In the code ```distributed_linear_regression_3_parties.py``` initially party y generates the private/public key pair and publishes the public key to S3. In each iteration of the gradient descent algorithm each party reads/writes to an S3 folder.
@@ -103,6 +108,7 @@ For processing 1M rows: At least 80GB disc & 12GB ram / container is recommended
 port 5432
 ```
 docker run --name y_container \
+-e PROGRAM='distributed_linear_regression_3_parties.py' \
 -e PARTY='y' \
 -e S3_BUCKET='!!!ADD ME!!!' \
 -e S3_SECRET='!!!ADD ME!!!' \
@@ -121,6 +127,7 @@ docker run --name y_container \
 port 5431
 ```
 docker run --name x1_container \
+-e PROGRAM='distributed_linear_regression_3_parties.py' \
 -e PARTY='x1' \
 -e S3_BUCKET='!!!ADD ME!!!' \
 -e S3_SECRET='!!!ADD ME!!!' \
@@ -140,6 +147,7 @@ docker run --name x1_container \
 port 5430
 ```
 docker run --name x2_container \
+-e PROGRAM='distributed_linear_regression_3_parties.py' \
 -e PARTY='x2' \
 -e S3_BUCKET='!!!ADD ME!!!' \
 -e S3_SECRET='!!!ADD ME!!!' \
@@ -182,10 +190,84 @@ docker exec x2_container cat thetas.log
 docker exec (y_container) cat gpdb_io.log
 ```
 
+# Multiplication Scenario
+Multiply 2 encrypted numbers with only using a paillier scheme
+https://mentalmodels4life.net/2018/07/07/multiplication-and-comparison-operations-in-paillier/
+
+Same steps as Gradient Descent Scenario scenario, but run the following docker containers
+
+##### Party P (private key holder)
+
+port 5432
+```
+docker run --name p_container \
+-e PROGRAM='encrypted_multiplication_using_paillier.py' \
+-e PARTY='p' \
+-e S3_BUCKET='!!!ADD ME!!!' \
+-e S3_SECRET='!!!ADD ME!!!' \
+-e S3_ACCESSID='!!!ADD ME!!!' \
+-e S3_ENDPOINT='s3-ap-southeast-2.amazonaws.com' \
+-e GP_HOST='localhost' \
+-e GP_DATABASE='gpadmin' \
+-e GP_USER='gpadmin' \
+-e GP_PASSWORD='greenplum' \
+-i -t -p 5432:5432 -d fiucloud/compute
+```
+
+<br />
+
+##### Party X
+y = sqrt(2)
+
+port 5431
+```
+docker run --name x_container \
+-e PROGRAM='encrypted_multiplication_using_paillier.py' \
+-e PARTY='x' \
+-e S3_BUCKET='!!!ADD ME!!!' \
+-e S3_SECRET='!!!ADD ME!!!' \
+-e S3_ACCESSID='!!!ADD ME!!!' \
+-e S3_ENDPOINT='s3-ap-southeast-2.amazonaws.com' \
+-e GP_HOST='localhost' \
+-e GP_DATABASE='gpadmin' \
+-e GP_USER='gpadmin' \
+-e GP_PASSWORD='greenplum' \
+-i -t -p 5431:5432 -d fiucloud/compute
+```
+
+
+<br />
+
+##### Party Y
+x = pi
+
+port 5430
+```
+docker run --name y_container \
+-e PROGRAM='encrypted_multiplication_using_paillier.py' \
+-e PARTY='y' \
+-e S3_BUCKET='!!!ADD ME!!!' \
+-e S3_SECRET='!!!ADD ME!!!' \
+-e S3_ACCESSID='!!!ADD ME!!!' \
+-e S3_ENDPOINT='s3-ap-southeast-2.amazonaws.com' \
+-e GP_HOST='localhost' \
+-e GP_DATABASE='gpadmin' \
+-e GP_USER='gpadmin' \
+-e GP_PASSWORD='greenplum' \
+-i -t -p 5430:5432 -d fiucloud/compute
+```
+
+### Inspect Results 
+```
+docker exec p_container cat results.log
+```
+
+
 #Know issues
 ## PHE (N1 analytics) library.
 * After initial encryption the exponents are in plaintext (leaked). Can mitigate by adding a constant encrypted number or adjusting max_exponent. Refer to ```tests/test_exponents.py``` 
 * After more than 17 additions (on the same encrypted number) the library breaks. Refer to ```test/test_phe_multiplications.py```
-* Key lengths on more than 1024 bits result in exponentially longer compute times. 100ms instead of 1ms. Is 1024 bits ok?
+* Key lengths on more than 1024 bits result in a lot longer compute times. eg ~100ms instead of 1ms. Is 1024 bit key ok?
+* Security vulnerability found in dependency pycrypto==2.6.1.  https://security-tracker.debian.org/tracker/CVE-2013-7459
 ## Algorithm (gradient descent)
 * Gradients are unencrypted so if parties x1 and x2 collude (share their data) they can discover the labels from y. To mitigate this encrypt the gradients. 
