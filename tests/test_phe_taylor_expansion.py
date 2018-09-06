@@ -4,6 +4,7 @@ import phe.paillier as paillier
 pubkey, prikey = paillier.generate_paillier_keypair(n_length=1024)
 import time
 
+# Note : This code is not required for logistic regression as we can do the taylor expansion unencrypted
 
 # time: o(n), space: o(1)
 def taylorTest(exp, iterations):

@@ -1,5 +1,5 @@
 # Description
-This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). This image can be easily modified for other models.
+This docker image is a self contained example of privacy preserving distributed linear regression (gradient descent). This image can be easily modified for other models. We also discuss easy modifications for logistic regression
 
 # Architecture
 This is a simple system that executes deterministic privacy-preserving non-concurrent (but distributed) algorithms among 2 or more parties.  It should be easy to understand and convey to partner organisations.
@@ -24,9 +24,9 @@ Using gradient descent we are calculating ```y = 31*x1 - 5.5*x2```.
 We generate random synthetic data (with random noise). Please refer to ```test/test_local_linear_regression.py``` to see a simple local example of this. The actual distributed code (using paillier homomorphic encryption) is in ```distributed_linear_regression_3_parties.py```. Edit this file to change experiment parameters (such as: constants, iteration count, number of rows, learning rate). S3 and greenplum configuration should be set when you run the docker image (please see below).  
 
 # Data Flow
-The data flow is linear. Each operation reads from an S3 'folder' and writes to **another** S3 folder. Only **1** party can subscribe to an S3 folder which will be produces by another party (ie. 1:1 messaging). If you break this paradigm the system will return unexpected results as its not designed to be concurrent or run non-deterministic algorithms.
+Each operation reads from an S3 'folder' and writes to **another** S3 folder. 
 
-In the code ```distributed_linear_regression_3_parties.py``` initially party y generates the private/public key pair and publishes the public key to S3. In each iteration of the gradient descent algorithm each party write/reads to the S3 bucket.
+In the code ```distributed_linear_regression_3_parties.py``` initially party y generates the private/public key pair and publishes the public key to S3. In each iteration of the gradient descent algorithm each party reads/writes to an S3 folder.
 
 step|iteration|s3 folder |party|operation        |
 ----|---------|----------|-----|------------------
@@ -52,6 +52,9 @@ step|iteration|s3 folder |party|operation        |
 
 Note: On each 'read gradient' operation the party updates its private theta(s) which changes the predictions for the next iteration
 
+## Logistic Regression
+Logistic regression can easily be calculated by replacing the linear function ```x1 * x1_theta``` with a exponential function such as ```e^(x1_theata*x1)```. 
+To calculate this logit function we can use taylor expansion, ie. ```e^x = x^0/0! + x^1/1! + x^2/2!....n```. Taylor expansion can be calculated unencrypted with the ```e^(x1_theata*x1)``` value being encrypted and added to existing encrypted prediction. Fully homomorphic encryption operations are not required. 
 
 
 
