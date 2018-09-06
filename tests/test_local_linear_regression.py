@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np, random as random
 
 iterations = 20
 init = np.linspace(-5, 5, 1000)
@@ -19,8 +19,8 @@ y = y.flatten()
 
 alpha = 0.1
 n = float(len(x1))
-x1_theta = 0
-x2_theta = 0
+x1_theta = random.random() * max(x1)
+x2_theta = random.random() * max(x2)
 gradients = [0] * len(x1)
 
 for i in range(0, iterations):

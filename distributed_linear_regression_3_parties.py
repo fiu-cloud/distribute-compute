@@ -1,4 +1,4 @@
-import phe.paillier as paillier, numpy as np,sys, math
+import phe.paillier as paillier, numpy as np,sys, math, random
 import compute.gpdb_io as io
 import compute.serialisation as ser
 party = sys.argv[1]
@@ -31,8 +31,8 @@ def main():
     x2 = x2.flatten()
     y = y.flatten()
     n = float(len(x1))
-    x1_theta = 0
-    x2_theta = 0
+    x1_theta = random.random() * max(x1)
+    x2_theta = random.random() * max(x2)
 
     # initialise
     if party == "y":
@@ -54,7 +54,7 @@ def main():
     for i in range(0, iterations):
         if party == "x1":
             x1_prediction = x1 * x1_theta
-            x1_prediction_encrypted = list(map(lambda x: [ser.serialiseEncrypted(pubkey.encrypt(x))], x1_prediction))
+            x1_prediction_encrypted = [[ser.serialiseEncrypted(pubkey.encrypt(x))] for x in x1_prediction]
             io.write(x1_prediction_encrypted,"x1/"+str(i)+"/","x1_prediction text",i)
             g1 = io.read("gradient/"+str(i)+"/","gradient float",i)
             x1_gradient = [a[0]*b for a,b in zip(g1,x1)]
@@ -63,9 +63,9 @@ def main():
             thetas.write("x1 "+ str(x1_theta) + "["+str(x1_diff)+"]\r\n")
         elif party == "x2":
             x1_prediction_serialised = io.read("x1/"+str(i)+"/","x1_prediction text",i)
-            x1_prediction = list(map(lambda x: ser.deserialiseEncrypted(pubkey,x[0]) , x1_prediction_serialised))
+            x1_prediction = [ser.deserialiseEncrypted(pubkey,x[0]) for x in x1_prediction_serialised]
             x2_prediction = x1_prediction + x2 * x2_theta
-            x2_prediction_encrypted = list(map(lambda x: [ser.serialiseEncrypted(x)], x2_prediction))
+            x2_prediction_encrypted = [[ser.serialiseEncrypted(x)] for x in x2_prediction]
             io.write(x2_prediction_encrypted,"x2/"+str(i)+"/","x2_prediction text",i)
             g2 = io.read("gradient/"+str(i)+"/","gradient float",i)
             x2_gradient = [a[0]*b for a,b in zip(g2,x2)]
@@ -74,9 +74,9 @@ def main():
             thetas.write("x2 "+ str(x2_theta) + "["+str(x2_diff)+"]\r\n")
         elif party == "y":
             x2_prediction_serialised =io.read("x2/"+str(i)+"/","x2_prediction text",i)
-            x2_prediction = list(map(lambda x: prikey.decrypt(ser.deserialiseEncrypted(pubkey,x[0])), x2_prediction_serialised))
+            x2_prediction = [prikey.decrypt(ser.deserialiseEncrypted(pubkey,x[0])) for x in x2_prediction_serialised]
             gradient = x2_prediction - y
-            gradient_out = list(map(lambda x: [x] ,gradient))
+            gradient_out = [[x] for x in gradient]
             io.write(gradient_out,"gradient/"+str(i)+"/","gradient float",i)
 
 
